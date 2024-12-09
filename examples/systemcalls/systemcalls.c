@@ -1,5 +1,13 @@
 #include "systemcalls.h"
-
+#include "stdio.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "sys/wait.h"
+#include "fcntl.h"
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdbool.h>
+#include <stdarg.h>
 /**
  * @param cmd the command to execute with system()
  * @return true if the command in @param cmd was executed
@@ -17,7 +25,7 @@ bool do_system(const char *cmd)
  *   or false() if it returned a failure
 */
 
-    return true;
+    return system(cmd) != -1;
 }
 
 /**
@@ -61,6 +69,45 @@ bool do_exec(int count, ...)
 
     va_end(args);
 
+    // Fork a new process
+    pid_t pid = fork();
+    if (pid < 0) {
+        // Fork failed
+        perror("Fork failed");
+        return false;
+    }
+
+    if (pid == 0) {
+        // Child process
+        if (execv(command[0], command) == -1) {
+            // execv failed
+            perror("execv failed");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // Parent process: wait for the child to complete
+    int status;
+    if (waitpid(pid, &status, 0) == -1) {
+        // waitpid failed
+        perror("waitpid failed");
+        return false;
+    }
+
+    // Check the exit status of the child process
+    if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+        // Command executed successfully
+        return true;
+    } else {
+        // Command failed or returned non-zero status
+        if (WIFEXITED(status)) {
+            fprintf(stderr, "Command returned non-zero exit status: %d\n", WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+            fprintf(stderr, "Command terminated by signal: %d\n", WTERMSIG(status));
+        }
+        return false;
+    }
+
     return true;
 }
 
@@ -95,5 +142,51 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
 
     va_end(args);
 
+    int kidpid;
+    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+    if (fd < 0) { 
+	    perror("open"); 
+	    abort(); 
+    }
+
+    switch (kidpid = fork()) {
+      case -1: 
+	      perror("fork"); 
+	      abort();
+
+      case 0:
+        if (dup2(fd, 1) < 0) { 
+		perror("dup2"); 
+		abort(); 
+	}
+        close(fd);
+        //execv(command[0], &command[1]); 
+        execv(command[0], command); 
+
+	perror("execvp"); 
+	return false;
+
+      default:
+        close(fd);
+    }
+
+    int status;
+    if (waitpid(kidpid, &status, 0) == -1) {
+        perror("waitpid failed");
+        return false;
+    }
+
+    // Check if the child exited successfully
+    if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+        return true;
+    } else {
+        if (WIFEXITED(status)) {
+            fprintf(stderr, "Command returned non-zero exit status: %d\n", WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+            fprintf(stderr, "Command terminated by signal: %d\n", WTERMSIG(status));
+        }
+        return false;
+    }
+    
     return true;
 }

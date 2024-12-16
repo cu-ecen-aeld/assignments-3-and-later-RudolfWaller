@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ $# != 2 ]; then
     echo "Usage: finder.sh <files dir> <search string>"

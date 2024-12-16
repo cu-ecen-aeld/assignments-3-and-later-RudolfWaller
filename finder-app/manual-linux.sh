@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Script outline to install and build kernel.
 # Author: Siddhant Jajoo.
 
@@ -15,6 +15,7 @@ BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
+SYSROOT=`${CROSS_COMPILE}gcc -print-sysroot`
 
 if [ $# -lt 1 ]
 then
@@ -57,8 +58,18 @@ then
 fi
 
 # TODO: Create necessary base directories
-mkdir -p ${OUTDIR}/rootfs/{bin,dev,etc,home,lib,proc,sys,tmp,usr/{bin,sbin},var}
+mkdir -p ${OUTDIR}/rootfs/bin
+mkdir -p ${OUTDIR}/rootfs/dev
+mkdir -p ${OUTDIR}/rootfs/etc
+mkdir -p ${OUTDIR}/rootfs/home
+mkdir -p ${OUTDIR}/rootfs/lib
 mkdir -p ${OUTDIR}/rootfs/lib64
+mkdir -p ${OUTDIR}/rootfs/proc
+mkdir -p ${OUTDIR}/rootfs/sys
+mkdir -p ${OUTDIR}/rootfs/tmp
+mkdir -p ${OUTDIR}/rootfs/usr/bin
+mkdir -p ${OUTDIR}/rootfs/usr/sbin
+mkdir -p ${OUTDIR}/rootfs/var
 
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
@@ -79,6 +90,7 @@ fi
 make -j$(nproc) ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
 make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} CONFIG_PREFIX=${OUTDIR}/rootfs install
 sudo chmod u+s ${OUTDIR}/rootfs/bin/busybox
+sudo chown root:root ${OUTDIR}/rootfs/bin/busybox 
 sudo cp ${OUTDIR}/rootfs/bin/busybox /bin
 
 echo "Library dependencies 1"
@@ -87,8 +99,8 @@ ${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
 echo "Library dependencies 2"
-SYSROOT=/usr/local/arm_compiler/install/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc
-
+# SYSROOT=/usr/local/arm_compiler/install/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc
+echo SYSROOT= $SYSROOT
 cp -a ${SYSROOT}/lib/ld-linux-aarch64.so.1   ${OUTDIR}/rootfs/lib/
 # cp -a ${SYSROOT}/usr/lib64/ld-2.31.so      ${OUTDIR}/rootfs/lib64/
 cp -a ${SYSROOT}/lib64/libc.so.6             ${OUTDIR}/rootfs/lib64/

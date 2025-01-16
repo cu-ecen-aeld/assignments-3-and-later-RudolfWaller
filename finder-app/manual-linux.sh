@@ -53,7 +53,7 @@ echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
 if [ -d "${OUTDIR}/rootfs" ]
 then
-	echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
+    echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
     sudo rm  -rf ${OUTDIR}/rootfs
 fi
 
@@ -99,10 +99,7 @@ ${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
 echo "Library dependencies 2"
-# SYSROOT=/usr/local/arm_compiler/install/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc
-echo SYSROOT= $SYSROOT
 cp -a ${SYSROOT}/lib/ld-linux-aarch64.so.1   ${OUTDIR}/rootfs/lib/
-# cp -a ${SYSROOT}/usr/lib64/ld-2.31.so      ${OUTDIR}/rootfs/lib64/
 cp -a ${SYSROOT}/lib64/libc.so.6             ${OUTDIR}/rootfs/lib64/
 cp -a ${SYSROOT}/lib64/libm.so.6             ${OUTDIR}/rootfs/lib64/
 cp -a ${SYSROOT}/lib64/libresolv.so.2        ${OUTDIR}/rootfs/lib64/

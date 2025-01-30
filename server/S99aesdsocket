@@ -8,7 +8,8 @@ if [ "$1" = "start" ]; then
 fi
 
 if [ "$1" = "stop" ]; then
-    PID=$(pgrep $DAEMON)
+    PID=$(ps aux | grep "$DAEMON" | grep -v grep | awk '{print $2}')
+
     if [ -z "$PID" ]; then
         echo "Processo '$DAEMON' não encontrado."
         exit 1

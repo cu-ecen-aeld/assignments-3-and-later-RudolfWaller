@@ -21,6 +21,9 @@ int data_file_fd = -1;
 void handle_signal(int signo) {
     syslog(LOG_INFO, "Caught signal, exiting");
 
+    if(signo!=SIGINT && signo!=SIGTERM)
+        return;
+
     if (client_socket >= 0) {
         close(client_socket);
     }

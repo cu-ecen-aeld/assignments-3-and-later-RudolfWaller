@@ -8,22 +8,20 @@ if [ "$1" = "start" ]; then
 fi
 
 if [ "$1" = "stop" ]; then
-    PID=$(ps aux | grep "$DAEMON" | grep -v grep | awk '{print $2}')
+    PID=$(ps aux | grep "$DAEMON" | grep -v grep | awk '{print $1}')
 
     if [ -z "$PID" ]; then
         echo "Processo '$DAEMON' não encontrado."
         exit 1
     fi
 
-    for P in $PID;
-    do
-        kill -s 15 $P
+    kill -s 15 $PID
 
-        if [ $? -eq 0 ]; then
-            echo "Sinal SIGTERM enviado para o processo '$DAEMON' (PID: $PID)."
-	    exit 0
-        fi
-    done
+    if [ $? -eq 0 ]; then
+        echo "Sinal SIGTERM enviado para o processo '$DAEMON' (PID: $PID)."
+        exit 0
+    fi
+
     exit $?
 fi
 
